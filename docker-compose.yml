@@ -1,0 +1,114 @@
+# Fichier : docker-compose.yml (Version Finale avec Zalando Spilo)
+
+version: '3.8'
+
+services:
+  #########################################
+  # SERVICE 1: Le "Notaire" (ETCD)
+  #########################################
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd-notaire
+    ports:
+      - "2379:2379"
+    environment:
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379 
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ENABLE_V2=true
+    networks:
+      - ha-network
+
+  #########################################
+  # SERVICE 2: Serveur A (Patroni/Spilo)
+  #########################################
+  patroni1:
+    image: ghcr.io/zalando/spilo-17:4.0-p3 
+    container_name: serveur-a
+    hostname: serveur-a
+    ports:
+      - "5001:5432"
+      - "8001:8008"
+    environment:
+      - SCOPE=mon_cluster_ha
+      - PATRONI_NAME=serveur-a
+      
+      # --- Connexion à ETCD ---
+      - ETCD_HOST=etcd:2379
+      
+      # --- Identifiants Superutilisateur (pour Web App) ---
+      - PGUSER_backenduser=adminpassword
+      # Crée une base de données nommée 'presentation_db'
+      - PGDATABASE_presentation_db=true 
+      
+      # --- Configuration Réseau Interne ---
+      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
+      - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+    volumes:
+      - patroni1_data:/home/postgres/pgdata # Chemin des données pour Spilo
+    networks:
+      - ha-network
+    depends_on:
+      - etcd
+
+  #########################################
+  # SERVICE 3: Serveur B (Patroni/Spilo)
+  #########################################
+  patroni2:
+    image: ghcr.io/zalando/spilo-17:4.0-p3 # <-- Image Spilo (Postgres 15)
+    container_name: serveur-b
+    hostname: serveur-b
+    ports:
+      - "5002:5432" # Port Postgres de B
+      - "8002:8008" # Port API Patroni de B
+    environment:
+      # --- Noms du Cluster et du Nœud ---
+      - SCOPE=mon_cluster_ha
+      - PATRONI_NAME=serveur-b
+      
+      
+      # --- Connexion à ETCD ---
+      - ETCD_HOST=etcd:2379
+      
+      # --- Identifiants Superutilisateur (identiques) ---
+      - PGUSER_backenduser=adminpassword
+      - PGDATABASE_presentation_db=true
+
+      # --- Configuration Réseau Interne ---
+      - PATRONI_RESTAPI_LISTEN=0.0.0.0:8008
+      - PATRONI_POSTGRESQL_LISTEN=0.0.0.0:5432
+    volumes:
+      - patroni2_data:/home/postgres/pgdata # Chemin des données pour Spilo
+    networks:
+      - ha-network
+    depends_on:
+      - etcd
+
+#########################################
+# SERVICE 4: Le Proxy (HAProxy)
+#########################################
+  haproxy:
+    image: haproxy:2.8
+    container_name: proxy-ha
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5000:5000" 
+    depends_on:
+      - patroni1
+      - patroni2
+    networks:
+      - ha-network
+
+#########################################
+# Volumes
+#########################################
+volumes:
+  patroni1_data:
+  patroni2_data:
+
+#########################################
+# Réseau
+#########################################
+networks:
+  ha-network:
+    driver: bridge
