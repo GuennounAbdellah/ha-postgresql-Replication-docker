@@ -6,7 +6,9 @@ This repository provides a Docker-based solution for setting up a high availabil
 - **Secondary PostgreSQL Server**: Configured to replicate data from the primary server via WAL files.
 - **Patroni for High Availability**: Agents that monitor PostgreSQL instances and handle failover and recovery.
 - **Spilo (PostgreSQL + Patroni)**: Manages replication, automatic failover, and cluster state, you will find the Spilo image new available Tags from Zalando  in https://github.com/orgs/zalando/packages?repo_name=spilo
-- **etcd for Service Discovery**: Provides distributed consensus and coordination for Patroni.
+- **etcd for Service Discovery**: Uses the **Raft** consensus algorithm to ensure reliable distributedcoordination and leader election for Patroni. This is what enables automatic failover and guarantees HA (high availability).
+
+
 - **HAProxy**: Provides a single connection endpoint that automatically redirects traffic to the active PostgreSQL leader.
 ## Prerequisites
 - Docker and Docker Compose installed on your machine.
