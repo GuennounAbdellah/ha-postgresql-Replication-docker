@@ -24,10 +24,9 @@ This repository provides a Docker-based solution for setting up a high availabil
    ```
 4. Verify that the containers are running:
    ```bash
-   docker-compose ps
+   docker ps
    ```
-## Accessing PostgreSQL
-- Primary PostgreSQL Server:
+5. Access the PostgreSQL primary server via HAProxy:
    ```bash
    psql "postgresql://postgres:zalando@localhost:5000/postgres?sslmode=require"
    ```
