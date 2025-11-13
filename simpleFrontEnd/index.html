@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Frontend - User Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Simple Frontend</h1>
+    <div class="container">        
+        <!-- Feature 1: Form to add users -->
+        <section class="form-section">
+            <h2>Add New User</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label for="age">Age:</label>
+                    <input type="number" id="age" name="age" required placeholder="Enter age" min="1" max="150">
+                </div>
+                <button type="submit" class="btn-submit">Add User</button>
+            </form>
+            <div id="message" class="message"></div>
+        </section>
+
+        <!-- Feature 2: Table to display users -->
+        <section class="table-section">
+            <button class="btn-refresh" onclick="loadUsers()">Refresh</button>
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr>
+                        <td colspan="2" class="loading">Loading users...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
